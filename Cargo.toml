@@ -1,11 +1,11 @@
 [package]
 name = "udp-logger-rs"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2018"
 
 authors = ["Bruce Brown <brown.bruce1207@gmail.com>"]
 description = "Log macro for log's kv-unstable backend and a UDP socket logger."
-documentation = "https://docs.rs/upd-logger-rs"
+documentation = "https://docs.rs/udp-logger-rs"
 readme = "README.md"
 keywords = ["log", "kv", "key", "value", "udp"]
 categories = ["text-processing"]

@@ -28,7 +28,7 @@ fn main() {
 
 ## Installation
 ```sh
-$ cargo add upd-logger-rs
+$ cargo add udp-logger-rs
 ```
 
 ## Safety
