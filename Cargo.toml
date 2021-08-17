@@ -1,6 +1,6 @@
 [package]
 name = "udp-logger-rs"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2018"
 
 authors = ["Bruce Brown <brown.bruce1207@gmail.com>"]
@@ -19,6 +19,5 @@ chrono = { version = "0.4", features = ["std"] }
 bytebuffer = "0.2"
 libflate = "1.1"
 
-
 [dev-dependencies]
-femme = "2.1"
+lazy_static = "1.4"

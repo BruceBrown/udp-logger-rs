@@ -9,5 +9,5 @@ script: |
   cargo fmt -- --check &&
   cargo clippy -- -D clippy &&
   cargo build --verbose &&
-  cargo test  --verbose
+  cargo test  --verbose -- thread 1
 cache: cargo

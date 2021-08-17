@@ -1,7 +1,6 @@
 use udp_logger_rs::info;
-fn main() {
-    femme::start();
 
+fn main() {
     // The standard logging we know and love
     info!("hello");
     info!("hello",);

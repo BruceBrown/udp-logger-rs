@@ -1,6 +1,6 @@
 #![forbid(unsafe_code, future_incompatible, rust_2018_idioms)]
 #![deny(missing_debug_implementations, nonstandard_style)]
-//#![warn(missing_docs, missing_doc_code_examples, unreachable_pub)]
+#![warn(missing_docs, missing_doc_code_examples, unreachable_pub)]
 #![allow(dead_code)]
 
 //! This crate provides logging macros that incorporates key/value logging
@@ -19,12 +19,15 @@
 //! info!(kvs: &ctx, "something to log");
 //! ```
 use log::kv::{Error, Key, Value, Visitor};
-use log::{LevelFilter, Log, Metadata, Record, SetLoggerError};
+use log::{Log, Metadata, Record, SetLoggerError};
 use std::io::Write;
 use std::net::UdpSocket;
 
 // publicly exporting so $crate::Level works.
 pub use log::Level;
+
+// publicly exporting to make configuring simpler.
+pub use log::LevelFilter;
 
 /// The statically resolved maximum log level.
 pub const STATIC_MAX_LEVEL: LevelFilter = log::STATIC_MAX_LEVEL;
@@ -527,9 +530,9 @@ impl UdpLogger {
         self
     }
 
-    /// 'Init' the actual logger, instantiate it and configure it,
-    /// this method MUST be called in order for the logger to be effective.
-    pub fn init(mut self) -> Result<(), SetLoggerError> {
+    #[doc(hidden)]
+    // partial_init is used internally in init() and in testing.
+    pub fn partial_init(mut self) -> Self {
         /* Sort all module levels from most specific to least specific. The length of the module
          * name is used instead of its actual depth to avoid module name parsing.
          */
@@ -548,7 +551,14 @@ impl UdpLogger {
         self.sources.sort_by_key(|(level, _socket)| *level);
         self.destinations.sort_by_key(|(level, _socket)| *level);
         log::set_max_level(max_level);
-        log::set_boxed_logger(Box::new(self))?;
+
+        self
+    }
+    /// 'Init' the actual logger, instantiate it and configure it,
+    /// this method MUST be called in order for the logger to be effective.
+    pub fn init(self) -> Result<(), SetLoggerError> {
+        let logger = self.partial_init();
+        log::set_boxed_logger(Box::new(logger))?;
         Ok(())
     }
 }
