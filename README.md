@@ -19,8 +19,8 @@ fn main() {
     info!("hello {}", "cats");
     info!("hello {}", "cats",);
     let ctx: Vec<(String, String)> = vec![
-        ("key1".into(), "value1".into()),
-        ("key2".into(), "value2".into()),
+        ("cat_1".into(), "chashu".into()),
+        ("cat_2".into(), "nori".into()),
     ];
     info!(kvs: &ctx, "hello {}", "cats",);
 }
@@ -50,8 +50,8 @@ None.
 
 [1]: https://img.shields.io/crates/v/udp-logger-rs.svg?style=flat-square
 [2]: https://crates.io/crates/udp-logger-rs
-[3]: https://img.shields.io/travis/brucebrown/udp-logger-rs/master.svg?style=flat-square
-[4]: https://travis-ci.org/brucebrown/udp-logger-rs
+[3]: https://api.travis-ci.com/BruceBrown/udp-logger-rs.svg?branch=main
+[4]: https://app.travis-ci.com/github/brucebrown/udp-logger-rs
 [5]: https://img.shields.io/crates/d/udp-logger-rs.svg?style=flat-square
 [6]: https://crates.io/crates/udp-logger-rs
 [7]: https://img.shields.io/badge/docs-latest-blue.svg?style=flat-square

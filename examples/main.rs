@@ -13,8 +13,8 @@ fn main() {
 
     // The kv logging we hope to love
     let ctx: Vec<(String, String)> = vec![
-        ("key1".into(), "value1".into()),
-        ("key2".into(), "value2".into()),
+        ("cat_1".into(), "chashu".into()),
+        ("cat_2".into(), "nori".into()),
     ];
 
     // default target
