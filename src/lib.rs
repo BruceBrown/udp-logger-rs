@@ -12,8 +12,8 @@
 //! use udp_logger_rs::info;
 //!
 //! let ctx: Vec<(String, String)> = vec![
-//!   ("key1".into(), "value1".into()),
-//!   ("key2".into(), "value2".into()),
+//!   ("cat_1".into(), "chashu".into()),
+//!   ("cat_2".into(), "nori".into()),
 //! ];
 //!
 //! info!(kvs: &ctx, "something to log");
@@ -58,8 +58,8 @@ pub fn max_level() -> LevelFilter {
 ///
 /// // The kv logging we hope to love
 /// let ctx: Vec<(String, String)> = vec![
-///    ("key1".into(), "value1".into()),
-///    ("key2".into(), "value2".into()),
+///    ("cat_1".into(), "chashu".into()),
+///    ("cat_2".into(), "nori".into()),
 /// ];
 ///
 /// // default target
@@ -296,15 +296,12 @@ pub fn __private_api_log(
 /// # let v = "value1";
 /// format!(" {}={}", k, v);
 /// ```
-/// * Deflated, the entire payload is the deflated uncompressed string
 /// * ByteBuffer, the entire payload is a u8 level, i64 Utc::now().timestamp_millis(), and
 /// u32 string length followed by length * utf8.
 #[derive(Debug)]
 pub enum WireFmt {
     /// No Compression, the payload can be consistered a string of utf8 bytes.
     Uncompressed,
-    /// Deflate compression of uncompressed string.
-    Deflated,
     /// 1 byte Level, 8 bytes timestamp, 4 bytes len followed by len * utf8 (string)
     ByteBuffer,
 }
@@ -336,10 +333,15 @@ impl UdpLogger {
     /// [`init`]: #method.init
     #[must_use = "You must call init() to begin logging"]
     pub fn new() -> Self {
+        let socket = UdpSocket::bind("127.0.0.1:4000").expect("unable to bind to socket");
+        socket
+            .set_nonblocking(true)
+            .expect("unable to set socket non-blocking");
+
         Self {
             default_level: LevelFilter::Trace,
             module_levels: Vec::new(),
-            default_source: UdpSocket::bind("127.0.0.1:4000").unwrap(),
+            default_source: socket,
             sources: Vec::new(),
             default_destination: "127.0.0.1:4010".to_string(),
             destinations: Vec::new(),
@@ -440,7 +442,9 @@ impl UdpLogger {
     #[must_use = "You must call init() to begin logging"]
     pub fn with_source(mut self, source: &str) -> Self {
         let socket = UdpSocket::bind(source).expect("unable to bind to socket");
-        socket.set_nonblocking(true).unwrap();
+        socket
+            .set_nonblocking(true)
+            .expect("unable to set socket non-blocking");
         self.default_source = socket;
 
         self
@@ -468,7 +472,9 @@ impl UdpLogger {
     #[must_use = "You must call init() to begin logging"]
     pub fn with_source_level(mut self, source: &str, level: LevelFilter) -> Self {
         let socket = UdpSocket::bind(source).expect("unable to bind to socket");
-        socket.set_nonblocking(true).unwrap();
+        socket
+            .set_nonblocking(true)
+            .expect("unable to set socket non-blocking");
         self.sources.push((level, socket));
 
         self
@@ -631,20 +637,6 @@ impl Log for UdpLogger {
                     );
                     socket.send_to(payload.as_bytes(), remote_addr)
                 }
-                WireFmt::Deflated => {
-                    let payload = format!(
-                        "{} {:<5} [{}] {}{}",
-                        chrono::Utc::now().format("%Y-%m-%d %H:%M:%S%.3f"),
-                        record.level().to_string(),
-                        target,
-                        record.args(),
-                        visitor.0
-                    );
-                    let mut encoder = libflate::deflate::Encoder::new(Vec::new());
-                    let _result = encoder.write(payload.as_bytes());
-                    let writer = encoder.finish().unwrap();
-                    socket.send_to(&writer.0, remote_addr)
-                }
                 WireFmt::ByteBuffer => {
                     let mut encoder = bytebuffer::ByteBuffer::new();
                     let level: [u8; 1] = match record.level() {
@@ -654,12 +646,15 @@ impl Log for UdpLogger {
                         Level::Debug => [4],
                         Level::Trace => [5],
                     };
-                    let _ = encoder.write(&level);
                     let now = chrono::Utc::now().timestamp_millis().to_be_bytes();
-                    let _ = encoder.write(&now);
                     let text = format!("[{}] {}{}", target, record.args(), visitor.0);
-                    encoder.write_string(&text);
-                    socket.send_to(&encoder.to_bytes(), remote_addr)
+                    encoder
+                        .write(&level)
+                        .and_then(|_count| encoder.write(&now))
+                        .and_then(|_count| {
+                            encoder.write_string(&text);
+                            socket.send_to(&encoder.to_bytes(), remote_addr)
+                        })
                 }
             };
             match result {
